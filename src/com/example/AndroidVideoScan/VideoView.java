@@ -4,51 +4,92 @@ import android.content.Context;
 import android.view.SurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.app.Activity;
+import android.util.Log;
 
 public class VideoView extends SurfaceView {
     protected static final String TAG = "AndroidVideoScan";
+    private MyActivity mContext;
 
     public VideoView(Context context) {
         super(context);
+        mContext = (MyActivity) context;
     }
 
     public VideoView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = (MyActivity) context;
     }
 
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        mContext.resizeVideo(getMeasuredWidth(), getMeasuredHeight());
+    }
+
+    private float mDownX;
+    private float mDownY;
+    private float mLastX;
+    private float mLastY;
+    private boolean isOnClick;
+    private boolean isOnDrag;
+    private final float SCROLL_TRESHOLD = 5f;
+
     public boolean onTouchEvent(MotionEvent ev) {
-        MyActivity host = (MyActivity) getContext();
-        host.test();
+        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                mDownX = ev.getX();
+                mDownY = ev.getY();
+                isOnClick = true;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                if (isOnClick) {
+                    onTouch(ev, mDownX, mDownY);
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if(isDragging(ev, mDownX, mDownY)) {
+                    onTouchDrag(ev, mDownX, mDownY, mLastX, mLastY);
+                    isOnDrag = true;
+                    isOnClick = false;
+                }
+                break;
+            default:
+                break;
+        }
+
+        mLastX = ev.getX();
+        mLastY = ev.getY();
 
         return true;
     }
 
-//    public boolean onTouchEvent(MotionEvent ev) {
-//        switch (ev.getAction() & MotionEvent.ACTION_MASK) {
-//            case MotionEvent.ACTION_DOWN:
-//                mDownX = ev.getX();
-//                mDownY = ev.getY();
-//                isOnClick = true;
-//                break;
-//            case MotionEvent.ACTION_CANCEL:
-//            case MotionEvent.ACTION_UP:
-//                if (isOnClick) {
-//                    Log.i(TAG, "onClick ");
-//                    //TODO onClick code
-//                }
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                if (isOnClick && (Math.abs(mDownX - ev.getX()) > SCROLL_TRESHOLD || Math.abs(mDownY - ev.getY()) > SCROLL_TRESHOLD)) {
-//                    Log.i(TAG, "movement detected");
-//                    addRandomBalls(1, (int)ev.getX(), (int)ev.getY(), 50);
-////                    isOnClick = false;
-//                }
-//                break;
-//            default:
-//                break;
-//        }
-//
-//        return true;
-//    }
+    private boolean isDragging(MotionEvent ev, float xDown, float yDown) {
+        return isOnDrag ||
+                (isOnClick && Math.abs(xDown - ev.getX()) > SCROLL_TRESHOLD || Math.abs(yDown - ev.getY()) > SCROLL_TRESHOLD);
+    }
+
+    public void onTouchDrag(MotionEvent ev, float xDown, float yDown, float xLast, float yLast) {
+        float scanMax = 5;
+        float diffMax = 75;
+
+        float xCurr = ev.getX();
+
+        float xDiff = xCurr - xLast;
+
+        // Limit X dragging difference to only 100 pixel difference
+        xDiff = Math.min(xDiff, diffMax);
+        xDiff = Math.max(xDiff, -diffMax);
+
+        float scanValue = scanMax / diffMax * xDiff;
+
+        mContext.scan(scanValue);
+
+        Log.i(TAG, "scanValue: "+scanValue);
+    }
+
+    public void onTouch(MotionEvent ev, float xDown, float yDown) {
+        // No-op
+    }
 }

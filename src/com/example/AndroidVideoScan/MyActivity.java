@@ -1,41 +1,43 @@
 package com.example.AndroidVideoScan;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.graphics.PixelFormat;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnBufferingUpdateListener;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Bundle;
 import android.content.res.AssetFileDescriptor;
-import android.os.SystemClock;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
+import android.graphics.Color;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.Toast;
+import android.media.MediaMetadataRetriever;
 
 import java.io.*;
 
 public class MyActivity extends Activity implements
-        MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
+        MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, SurfaceHolder.Callback {
 
     private static String TAG="AndroidVideoScan";
     private int width=0;
     private int height=0;
-    private MediaPlayer player;
+    private ScanningMediaPlayer player;
     private VideoView surface;
     private SurfaceHolder holder;
+    private boolean playerPrepared;
 
+    private boolean seeking;
+    private int seekPosition;
+
+    class IntegerPair {
+        public int F;
+        public int S;
+
+        public IntegerPair(int F, int S) {
+            this.F = F;
+            this.S = S;
+        }
+    }
 
     /**
      * Called when the activity is first created.
@@ -44,9 +46,11 @@ public class MyActivity extends Activity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        playerPrepared = false;
+
         setContentView(R.layout.main);
 
-        surface=(VideoView)findViewById(R.id.videoviewsurface);
+        surface = (VideoView)findViewById(R.id.videoviewsurface);
         holder = surface.getHolder();
         holder.addCallback(this);
     }
@@ -60,19 +64,47 @@ public class MyActivity extends Activity implements
         // no-op
     }
 
-    public void test() {
-        player.seekTo(0);
+    public void surfaceCreated(SurfaceHolder surfaceholder) {
+        setUpPlayer();
     }
 
-    public void surfaceCreated(SurfaceHolder holder) {
-        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.sample_mpeg4);
+    public IntegerPair fitPlayerToAspect(MediaPlayer mediaPlayer, float fitWidth, float fitHeight) {
+        float playerWidth = mediaPlayer.getVideoWidth();
+        float playerHeight = mediaPlayer.getVideoHeight();
+        Log.i(TAG, "playerWidth: "+playerWidth);
+        Log.i(TAG, "playerHeight: "+playerHeight);
+        int width = 0;
+        int height = 0;
+
+        float widthAspect = playerWidth / fitWidth;
+        float heightAspect = playerHeight / fitHeight;
+
+        if(widthAspect > heightAspect) {
+            width = (int) fitWidth;
+            height = (int) ((playerHeight / playerWidth) * fitWidth);
+        } else {
+            height = (int) fitHeight;
+            width = (int) ((playerWidth / playerHeight) * fitHeight);
+        }
+
+        return new IntegerPair(width, height);
+    }
+
+    public void setUpPlayer() {
+        Log.i(TAG, "In setUpPlayer");
+
+        playerPrepared = false;
+        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test1);
+        FileDescriptor fd = afd.getFileDescriptor();
 
         try {
-            player = new MediaPlayer();
+            player = new ScanningMediaPlayer();
 
             player.setDisplay(holder);
             player.setOnPreparedListener(this);
-            player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            player.setOnSeekCompleteListener(this);
+            player.setOnErrorListener(this);
+            player.setDataSource(fd, afd.getStartOffset(), afd.getLength());
             afd.close();
 
             player.prepareAsync();
@@ -88,8 +120,39 @@ public class MyActivity extends Activity implements
         height = player.getVideoHeight();
 
         if (width!=0 && height!=0) {
-            holder.setFixedSize(width, height);
-            player.start();
+            playerPrepared = true;
+
+            int scrWidth = surface.getMeasuredWidth();
+            int scrHeight = surface.getMeasuredHeight();
+
+            Log.i(TAG, "scrWidth: "+scrWidth);
+            Log.i(TAG, "scrHeight: "+scrHeight);
+
+            resizeVideo(scrWidth, scrHeight);
+
+            seekPosition = player.getCurrentPosition();
         }
+    }
+
+    public void resizeVideo(int width, int height) {
+        if(playerPrepared) {
+            IntegerPair p = fitPlayerToAspect(player, width, height);
+            holder.setFixedSize(p.F, p.S);
+        }
+    }
+
+    public void onSeekComplete(MediaPlayer mediaPlayer) { }
+
+    public void scan(float seek) {
+        seeking = true;
+        seekPosition = (int) (seek*1000 + player.getCurrentPosition());
+        player.seekTo(seekPosition);
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mediaPlayer, int i, int i2) {
+        Log.e(TAG, "Error 1: "+i);
+        Log.e(TAG, "Error 2: "+i2);
+        return false;    // Error -38 lol
     }
 }
