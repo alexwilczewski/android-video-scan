@@ -12,19 +12,25 @@ public class VideoView extends SurfaceView {
 
     public VideoView(Context context) {
         super(context);
-        mContext = (MyActivity) context;
+        if(!isInEditMode()) {
+            mContext = (MyActivity) context;
+        }
     }
 
     public VideoView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mContext = (MyActivity) context;
+        if(!isInEditMode()) {
+            mContext = (MyActivity) context;
+        }
     }
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        mContext.resizeVideo(getMeasuredWidth(), getMeasuredHeight());
+        if(!isInEditMode()) {
+            mContext.resizeVideo(getMeasuredWidth(), getMeasuredHeight());
+        }
     }
 
     private float mDownX;

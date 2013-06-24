@@ -8,6 +8,5 @@
             android:id="@+id/videoviewsurface"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center">
-    </com.example.AndroidVideoScan.VideoView>
+            android:layout_gravity="center"/>
 </LinearLayout>
