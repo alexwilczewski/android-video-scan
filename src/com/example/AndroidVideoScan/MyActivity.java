@@ -1,7 +1,12 @@
 package com.example.AndroidVideoScan;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.content.res.AssetFileDescriptor;
 import android.util.Log;
@@ -12,6 +17,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.Color;
 import android.view.View;
 import android.media.MediaMetadataRetriever;
+import android.os.Environment;
+import android.widget.Button;
 
 import java.io.*;
 
@@ -28,6 +35,8 @@ public class MyActivity extends Activity implements
 
     private boolean seeking;
     private int seekPosition;
+
+    final int ACTIVITY_CHOOSE_FILE = 1;
 
     class IntegerPair {
         public int F;
@@ -53,6 +62,35 @@ public class MyActivity extends Activity implements
         surface = (VideoView)findViewById(R.id.videoviewsurface);
         holder = surface.getHolder();
         holder.addCallback(this);
+        holder.setFixedSize(0, 0);
+
+        Button btn = (Button) this.findViewById(R.id.select_file);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent chooseFile;
+                Intent intent;
+                chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+                chooseFile.setType("file/*");
+                intent = Intent.createChooser(chooseFile, "Choose a file");
+                startActivityForResult(intent, ACTIVITY_CHOOSE_FILE);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch(requestCode) {
+            case ACTIVITY_CHOOSE_FILE: {
+                if (resultCode == RESULT_OK){
+                    Uri uri = data.getData();
+                    String filePath = uri.getPath();
+                    Log.i(TAG, "PATH: "+filePath);
+
+                    setUpPlayer(filePath);
+                }
+            }
+        }
     }
 
 
@@ -65,7 +103,7 @@ public class MyActivity extends Activity implements
     }
 
     public void surfaceCreated(SurfaceHolder surfaceholder) {
-        setUpPlayer();
+//        setUpPlayer();
     }
 
     public IntegerPair fitPlayerToAspect(MediaPlayer mediaPlayer, float fitWidth, float fitHeight) {
@@ -90,12 +128,12 @@ public class MyActivity extends Activity implements
         return new IntegerPair(width, height);
     }
 
-    public void setUpPlayer() {
+    public void setUpPlayer(String path) {
         Log.i(TAG, "In setUpPlayer");
 
         playerPrepared = false;
-        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test1);
-        FileDescriptor fd = afd.getFileDescriptor();
+//        AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.test1);
+//        FileDescriptor fd = afd.getFileDescriptor();
 
         try {
             player = new ScanningMediaPlayer();
@@ -104,8 +142,9 @@ public class MyActivity extends Activity implements
             player.setOnPreparedListener(this);
             player.setOnSeekCompleteListener(this);
             player.setOnErrorListener(this);
-            player.setDataSource(fd, afd.getStartOffset(), afd.getLength());
-            afd.close();
+//            player.setDataSource(fd, afd.getStartOffset(), afd.getLength());
+//            afd.close();
+            player.setDataSource(path);
 
             player.prepareAsync();
         } catch (IOException e) {
