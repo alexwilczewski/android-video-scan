@@ -1,4 +1,4 @@
-android-video-scan
-==================
+Android App - Pull Image from Video
+===================================
 
-Android app; Scan video frames forward and backward
+Select a video you wish to pull an image from. You are able to scan through frames by swiping your finger on the video player. You are then able to save the current frame as an image on your device.
