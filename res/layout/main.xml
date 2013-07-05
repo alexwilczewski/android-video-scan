@@ -5,6 +5,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
+    <com.example.AndroidVideoScan.ScalingView
+        android:id="@+id/full_size"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
+
     <com.example.AndroidVideoScan.VideoView
             android:id="@+id/videoviewsurface"
             android:layout_width="wrap_content"
@@ -15,7 +21,8 @@
                     android:id="@+id/context_bar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/videoviewsurface">
+                    android:layout_below="@id/videoviewsurface"
+                    android:layout_centerHorizontal="true">
         <Button
                 android:id="@+id/select_file"
                 android:layout_width="wrap_content"

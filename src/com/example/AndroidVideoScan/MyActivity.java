@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.graphics.Color;
 import android.view.View;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
+import android.view.ViewGroup;
 import android.widget.Button;
 
 import java.io.*;
@@ -26,12 +28,18 @@ public class MyActivity extends Activity implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, SurfaceHolder.Callback {
 
     private static String TAG="AndroidVideoScan";
+
+    private static String FILE = "/storage/emulated/0/DCIM/Camera/test1.mp4";
+
     private int width=0;
     private int height=0;
     private ScanningMediaPlayer player;
     private VideoView surface;
     private SurfaceHolder holder;
     private boolean playerPrepared;
+
+    private View mFullSize;
+    private ViewGroup mContextBar;
 
     private boolean seeking;
     private int seekPosition;
@@ -59,10 +67,14 @@ public class MyActivity extends Activity implements
 
         setContentView(R.layout.main);
 
-        surface = (VideoView)findViewById(R.id.videoviewsurface);
+        mFullSize = (ScalingView) findViewById(R.id.full_size);
+
+        mContextBar = (ViewGroup) findViewById(R.id.context_bar);
+
+        surface = (VideoView) findViewById(R.id.videoviewsurface);
         holder = surface.getHolder();
         holder.addCallback(this);
-        holder.setFixedSize(0, 0);
+        holder.setFixedSize(1, 1);
 
         Button btn = (Button) this.findViewById(R.id.select_file);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -76,6 +88,10 @@ public class MyActivity extends Activity implements
                 startActivityForResult(intent, ACTIVITY_CHOOSE_FILE);
             }
         });
+    }
+
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
     }
 
     @Override
@@ -138,7 +154,7 @@ public class MyActivity extends Activity implements
         try {
             player = new ScanningMediaPlayer();
 
-            player.setDisplay(holder);
+//            player.setDisplay(holder);
             player.setOnPreparedListener(this);
             player.setOnSeekCompleteListener(this);
             player.setOnErrorListener(this);
@@ -161,13 +177,15 @@ public class MyActivity extends Activity implements
         if (width!=0 && height!=0) {
             playerPrepared = true;
 
-            int scrWidth = surface.getMeasuredWidth();
-            int scrHeight = surface.getMeasuredHeight();
+            int scrWidth = mFullSize.getMeasuredWidth();
+            int scrHeight = mFullSize.getMeasuredHeight();
 
             Log.i(TAG, "scrWidth: "+scrWidth);
             Log.i(TAG, "scrHeight: "+scrHeight);
 
             resizeVideo(scrWidth, scrHeight);
+
+            player.setDisplay(holder);
 
             seekPosition = player.getCurrentPosition();
         }
@@ -175,8 +193,24 @@ public class MyActivity extends Activity implements
 
     public void resizeVideo(int width, int height) {
         if(playerPrepared) {
+            int scrHeight = mFullSize.getHeight();
+            int ctxBarHeight = mContextBar.getHeight();
+            int maxHeight = scrHeight-ctxBarHeight;
+            Log.i(TAG, "MyActivity:resizeVideo - maxheight: "+maxHeight);
+            if(height > maxHeight) {
+                height = maxHeight;
+            }
+
             IntegerPair p = fitPlayerToAspect(player, width, height);
+            Log.i(TAG, "MyActivity:resizeVideo - w:"+p.F);
+            Log.i(TAG, "MyActivity:resizeVideo - h:"+p.S);
             holder.setFixedSize(p.F, p.S);
+        }
+    }
+
+    public void directResize(int width, int height) {
+        if(playerPrepared) {
+            holder.setFixedSize(width, height);
         }
     }
 

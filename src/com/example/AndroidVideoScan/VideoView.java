@@ -10,6 +10,9 @@ public class VideoView extends SurfaceView {
     protected static final String TAG = "AndroidVideoScan";
     private MyActivity mContext;
 
+    private int testW = 100;
+    private int testH = 100;
+
     public VideoView(Context context) {
         super(context);
         if(!isInEditMode()) {
@@ -21,15 +24,6 @@ public class VideoView extends SurfaceView {
         super(context, attrs);
         if(!isInEditMode()) {
             mContext = (MyActivity) context;
-        }
-    }
-
-    @Override
-    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        if(!isInEditMode()) {
-            mContext.resizeVideo(getMeasuredWidth(), getMeasuredHeight());
         }
     }
 
