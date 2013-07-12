@@ -81,8 +81,8 @@ public class MyActivity extends Activity implements
         mPlayer.setOnSeekCompleteListener(this);
         mPlayer.setOnErrorListener(this);
 
-        Button btn = (Button) findViewById(R.id.select_file);
-        btn.setOnClickListener(new View.OnClickListener() {
+        Button selectFileBtn = (Button) findViewById(R.id.select_file);
+        selectFileBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 //                Intent chooseFile;
@@ -170,6 +170,7 @@ public class MyActivity extends Activity implements
             resizeVideo(scrWidth, scrHeight);
 
             mPlayer.setDisplay(holder);
+            mPlayer.seekTo(0);
 
             seekPosition = mPlayer.getCurrentPosition();
         }
