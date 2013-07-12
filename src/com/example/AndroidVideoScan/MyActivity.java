@@ -76,10 +76,10 @@ public class MyActivity extends Activity implements
         holder = mSurface.getHolder();
         holder.addCallback(this);
 
-//        mPlayer = new ScanningMediaPlayer();
-//        mPlayer.setOnPreparedListener(this);
-//        mPlayer.setOnSeekCompleteListener(this);
-//        mPlayer.setOnErrorListener(this);
+        mPlayer = new ScanningMediaPlayer();
+        mPlayer.setOnPreparedListener(this);
+        mPlayer.setOnSeekCompleteListener(this);
+        mPlayer.setOnErrorListener(this);
 
         Button btn = (Button) findViewById(R.id.select_file);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -142,17 +142,9 @@ public class MyActivity extends Activity implements
 
         playerPrepared = false;
 
-        if(mPlayer != null) {
-            mPlayer.release();
-        }
+        mPlayer.reset();
 
         try {
-            mPlayer = new ScanningMediaPlayer();
-
-            mPlayer.setOnPreparedListener(this);
-            mPlayer.setOnSeekCompleteListener(this);
-            mPlayer.setOnErrorListener(this);
-
             mPlayer.setDataSource(path);
 
             mPlayer.prepareAsync();
