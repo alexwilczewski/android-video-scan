@@ -10,19 +10,25 @@ public class ScalingView extends View {
 
     protected static final String TAG = "AndroidVideoScan";
     private MyActivity mContext;
+    private boolean mOnMeasured;
 
     public ScalingView(Context context) {
         super(context);
         if(!isInEditMode()) {
-            mContext = (MyActivity) context;
+            init(context);
         }
     }
 
     public ScalingView(Context context, AttributeSet attrs) {
         super(context, attrs);
         if(!isInEditMode()) {
-            mContext = (MyActivity) context;
+            init(context);
         }
+    }
+
+    public void init(Context context) {
+        mContext = (MyActivity) context;
+        mOnMeasured = false;
     }
 
     @Override
@@ -30,10 +36,9 @@ public class ScalingView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         if(!isInEditMode()) {
-            Log.i(TAG, "ScalingView:onMeasure");
+            mOnMeasured = true;
 
-            // Attempt to resize video to default. Then contextbar will be "visible" on screen.
-            mContext.directResize(1, 1);
+            Log.i(TAG, "ScalingView:onMeasure");
 
             ViewTreeObserver observer = getViewTreeObserver();
             observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
